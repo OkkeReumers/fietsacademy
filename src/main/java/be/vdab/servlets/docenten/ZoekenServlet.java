@@ -9,19 +9,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import be.vdab.dao.DocentDAO;
+import be.vdab.services.DocentService;
 
 @WebServlet("/docenten/zoeken.htm")
 public class ZoekenServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String VIEW = "/WEB-INF/JSP/docenten/zoeken.jsp";
-	private final transient DocentDAO docentDAO = new DocentDAO();
+	private final transient DocentService docent = new DocentService();
 
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		if (request.getQueryString() != null) {
 			try {
-				request.setAttribute("docent", docentDAO.read(Long
+				request.setAttribute("docent", docent.read(Long
 						.parseLong(request.getParameter("id"))));
 			} catch (NumberFormatException ex) {
 				request.setAttribute("fouten",
