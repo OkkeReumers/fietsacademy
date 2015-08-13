@@ -19,4 +19,6 @@ public class DocentDAO {
 		entityManager.persist(docent);
 		}
 
+	
+	
 }
