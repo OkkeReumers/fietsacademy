@@ -1,40 +1,67 @@
 package be.vdab.services;
 
-import javax.persistence.EntityManager;
+import java.math.BigDecimal;
+import java.util.List;
 
 import be.vdab.dao.DocentDAO;
 import be.vdab.entities.Docent;
-import be.vdab.filters.JPAFilter;
+import be.vdab.valueobjects.AantalDocentenPerWedde;
+import be.vdab.valueobjects.VoornaamEnId;
 
 public class DocentService {
 	private final DocentDAO docentDAO = new DocentDAO();
 
-	// DocentService gebruikt DocentDA
+	// DocentService gebruikt DocentDAO
 
+	// DOCENT OPZOEKEN
 	public Docent read(long id) {
-		EntityManager entityManager = JPAFilter.getEntityManager();
-		// EntityManager aan de servlet filter JPAFilter vragen
-		try {
-			return docentDAO.read(id, entityManager);
-			// roep de DAO layer op en geef de EntityManager mee
-		} finally {
-			entityManager.close();
-			// sluit de entity manager
-		}
+		return docentDAO.read(id);
 	}
 
+	// NIEUWE DOCENT TOEVOEGEN //
 	public void create(Docent docent) {
-		EntityManager entityManager = JPAFilter.getEntityManager();
-		try {
-			entityManager.getTransaction().begin();
-			docentDAO.create(docent, entityManager);
-			entityManager.getTransaction().commit();
-		} catch (RuntimeException ex) {
-			entityManager.getTransaction().rollback();
-			throw ex;
-		} finally {
-			entityManager.close();
-		}
+		docentDAO.beginTransaction();
+		docentDAO.create(docent);
+		docentDAO.commit();
 	}
 
+	// DOCENT VERWIJDEREN //
+	public void delete(long id) {
+		docentDAO.beginTransaction();
+		docentDAO.delete(id);
+		docentDAO.commit();
+	}
+
+	// DOCENT OPSLAG GEVEN //
+	public void opslag(long id, BigDecimal percentage) {
+		docentDAO.beginTransaction();
+		docentDAO.read(id).opslag(percentage);
+		docentDAO.commit();
+	}
+
+	//
+	public List<Docent> findByWeddeBetween(BigDecimal van, BigDecimal tot,
+			int vanafRij, int aantalRijen) {
+		return docentDAO.findByWeddeBetween(van, tot, vanafRij, aantalRijen);
+	}
+
+	public List<VoornaamEnId> findVoornamen() {
+		return docentDAO.findVoornamen();
+	}
+
+	public BigDecimal findMaxWedde() {
+		return docentDAO.findMaxWedde();
+	}
+
+	public List<AantalDocentenPerWedde> findAantalDocentenPerWedde() {
+		return docentDAO.findAantalDocentenPerWedde();
+	}
+
+	public void algemeneOpslag(BigDecimal percentage) {
+		BigDecimal factor = BigDecimal.ONE.add(percentage.divide(BigDecimal
+				.valueOf(100)));
+		docentDAO.beginTransaction();
+		docentDAO.algemeneOpslag(factor);
+		docentDAO.commit();
+	}
 }
