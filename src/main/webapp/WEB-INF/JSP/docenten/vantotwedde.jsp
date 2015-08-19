@@ -33,6 +33,7 @@ td:first-child, td:last-child {
 					<th>Nummer</th>
 					<th>Naam</th>
 					<th>Wedde</th>
+					<th>Campus</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -42,6 +43,7 @@ td:first-child, td:last-child {
 						<td>${docent.naam}</td>
 						<td><fmt:formatNumber value='${docent.wedde}'
 								minFractionDigits='2' maxFractionDigits='2' /></td>
+						<td>${docent.campus.naam }</td>
 					</tr>
 				</c:forEach>
 			</tbody>

@@ -4,18 +4,34 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 // enkele imports (vooral uit javax.persistence)...
 import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedAttributeNode;
+import javax.persistence.NamedEntityGraph;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import be.vdab.enums.Geslacht;
 
 @Entity
 @Table(name = "docenten")
+@NamedEntityGraph(name = "Docent.metCampus", 
+attributeNodes = @NamedAttributeNode("campus"))
 public class Docent implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
@@ -28,6 +44,46 @@ public class Docent implements Serializable {
 	@Enumerated(EnumType.STRING)
 	private Geslacht geslacht;
 
+	@ElementCollection
+	// bij een variabele die een verzameling value objecten voorstelt
+	@CollectionTable(name = "docentenbijnamen", // je geeft hiermee de naam van
+												// de table aan die value
+												// objecten bevat
+	joinColumns = @JoinColumn(name = "docentid"))
+	// hiermee geefje een kolom in deze tabel aan
+	@Column(name = "Bijnaam")
+	// geeft de naam van de kolom aan die hoort bij de value objecten in de
+	// verzameling
+	private Set<String> bijnamen;
+
+	@Version 
+	private long versie;
+	
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	// als de key die hierbij hoort verplicht is moet het false zijn
+	@JoinColumn(name = "campusid")
+	private Campus campus;
+
+	@ManyToMany( 
+			mappedBy = "docenten") 
+			private Set<Verantwoordelijkheid> verantwoordelijkheden;
+			public void addVerantwoordelijkheid(Verantwoordelijkheid verantwoordelijkheid) {
+			verantwoordelijkheden.add(verantwoordelijkheid);
+			if ( ! verantwoordelijkheid.getDocenten().contains(this)) {
+			verantwoordelijkheid.addDocent(this);
+			}
+			}
+			public void removeVerantwoordelijkheid(
+			Verantwoordelijkheid verantwoordelijkheid) {
+			verantwoordelijkheden.remove(verantwoordelijkheid);
+			if (verantwoordelijkheid.getDocenten().contains(this)) {
+			verantwoordelijkheid.removeDocent(this);
+			}
+			}
+			public Set<Verantwoordelijkheid> getVerantwoordelijkheden() {
+			return Collections.unmodifiableSet(verantwoordelijkheden);
+			}
+	
 	public long getId() {
 		return id;
 	}
@@ -60,6 +116,26 @@ public class Docent implements Serializable {
 		return voornaam + ' ' + familienaam;
 	}
 
+	public Campus getCampus() {
+		return campus;
+	}
+
+	public void setCampus(Campus campus) {
+		if (this.campus != null && this.campus.getDocenten().contains(this)) {
+			// als de andere kant nog niet bijgewerkt is
+			this.campus.removeDocent(this); // werk je de andere kant bij
+		}
+		this.campus = campus;
+		if (campus != null && !campus.getDocenten().contains(this)) {
+			// als de andere kant nog niet bijgewerkt is
+			campus.addDocent(this); // werk je de andere kant bij
+		}
+	}
+
+	public Set<String> getBijnamen() {
+		return Collections.unmodifiableSet(bijnamen);
+	}
+
 	public Docent(String voornaam, String familienaam, BigDecimal wedde,
 			Geslacht geslacht, long rijksRegisterNr) {
 		setVoornaam(voornaam);
@@ -67,6 +143,8 @@ public class Docent implements Serializable {
 		setWedde(wedde);
 		setGeslacht(geslacht);
 		setRijksRegisterNr(rijksRegisterNr);
+		bijnamen = new HashSet<>();
+		verantwoordelijkheden = new LinkedHashSet<>();
 	}
 
 	protected Docent() {
@@ -130,4 +208,11 @@ public class Docent implements Serializable {
 		wedde = wedde.multiply(factor).setScale(2, RoundingMode.HALF_UP);
 	}
 
+	public void addBijnaam(String bijnaam) {
+		bijnamen.add(bijnaam);
+	}
+
+	public void removeBijnaam(String bijnaam) {
+		bijnamen.remove(bijnaam);
+	}
 }
